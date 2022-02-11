@@ -1,4 +1,4 @@
-import 'dart:ffi';
+import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +7,14 @@ import 'package:flutter_svg/svg.dart';
 import 'package:livenewspro/Client/HttpClient.dart';
 import 'package:livenewspro/Constants/AppConstants.dart';
 import 'package:livenewspro/Models/Channel.dart';
+import 'package:livenewspro/Models/FavModel.dart';
 import 'package:livenewspro/Theme/AppTheme.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
+import 'package:http/http.dart' as http;
+
+
 
 class LiveStreamScreen extends StatefulWidget {
   Channel _channel;
@@ -25,9 +30,101 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   late VideoPlayerController _controller;
   bool controlsVisible = true;
   bool fullScreen = false;
+  bool favt = false;
+  String userID = "";
+
+  void checkFav(String cID) async {
+    var client = http.Client();
+    final prefs = await SharedPreferences.getInstance();
+
+    String url = "https://livetvi.com/dashboard/api/profav_check?uID=" +
+        prefs.getString('userId')! +
+        "&cID=" +
+        cID;
+    try {
+      var response = await client.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        var jsonString = response.body;
+
+        FavModel fav = favModelFromJson(jsonString);
+        if (fav.status == "2") {
+          setState(() {
+            favt = true;
+          });
+        } else {
+          setState(() {
+            favt = false;
+          });
+        }
+      } else if (response.statusCode == 404) {}
+      print(response.statusCode);
+    } on Exception {}
+  }
+
+  void addFav(String cID) async {
+    var client = http.Client();
+    final prefs = await SharedPreferences.getInstance();
+
+    String url = "https://livetvi.com/dashboard/api/profav_insert";
+    try {
+      var response = await client.post(Uri.parse(url),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, String>{
+            'uID': prefs.getString('userId')!,
+            'uemail': prefs.getString('Email')!,
+            'cID': cID,
+          }));
+      if (response.statusCode == 200) {
+
+        AppConstants.refreshFavs=true;
+        var jsonString = response.body;
+        FavModel fav = favModelFromJson(jsonString);
+        if (fav.status == "1") {
+          setState(() {
+            favt = true;
+          });
+        } else {
+          setState(() {
+            favt = false;
+          });
+        }
+      } else if (response.statusCode == 404) {}
+
+    } on Exception {
+    }
+  }
+
+  void deleteFav( String cID) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    var client = http.Client();
+    String url = "https://livetvi.com/dashboard/api/profav_delete?uID=" +
+        prefs.getString('userId')! +
+        "&cID=" +
+        cID;
+    try {
+      var response = await client.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        AppConstants.refreshFavs=true;
+        var jsonString = response.body;
+
+        FavModel fav = favModelFromJson(jsonString);
+        if (fav.status == "3") {
+          setState(() {
+            favt = false;
+          });
+        }
+
+      } else if (response.statusCode == 404) {}
+      print(response.statusCode);
+    } on Exception {}
+  }
 
   @override
   void initState() {
+    checkFav(widget._channel.id.toString());
     relatedChannels = HttpClient.getRelated(widget._channel);
     _controller = VideoPlayerController.network(widget._channel.streamUrl)
       ..initialize().then((_) {
@@ -75,13 +172,17 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
         return Future.value(false);
       },
       child: Scaffold(
-          backgroundColor: AppTheme.backgroundColor,
+          backgroundColor: MediaQuery.of(context).platformBrightness == Brightness.light
+              ? AppTheme.backgroundColor
+              : AppTheme.darkBackground,
           body: Stack(children: [
             Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
                 "assets/images/circles.png",
-                color: AppTheme.darkGrey,
+                color: MediaQuery.of(context).platformBrightness == Brightness.light
+                    ? AppTheme.darkGrey
+                    : AppTheme.white,
                 width: MediaQuery.of(context).size.height / 2,
                 fit: BoxFit.contain,
               ),
@@ -145,7 +246,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                                         bufferedColor:
                                                             AppTheme.grey,
                                                         playedColor:
-                                                            AppTheme.purple)),
+                                                        MediaQuery.of(context).platformBrightness == Brightness.light
+                                                            ? AppTheme.purple
+                                                            : AppTheme.darkBackground,)),
                                               )),
                                           Align(
                                             alignment: Alignment.bottomRight,
@@ -313,7 +416,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                       : Container(
                           margin: const EdgeInsets.only(left: 20, right: 20),
                           height: 70,
-                          color: Colors.white,
+                          color: MediaQuery.of(context).platformBrightness == Brightness.light
+                              ? AppTheme.white
+                              : AppTheme.darkCard,
                           child: Stack(
                             children: [
                               Align(
@@ -324,7 +429,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                   child: Text(
                                     widget._channel.chName,
                                     style: TextStyle(
-                                        color: AppTheme.purple, fontSize: 17),
+                                        color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                            ? AppTheme.purple
+                                            : AppTheme.white, fontSize: 17),
                                   ),
                                 ),
                               ),
@@ -344,14 +451,38 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                 alignment: Alignment.centerRight,
                                 child: Container(
                                   margin: const EdgeInsets.only(right: 10.0),
-                                  child: IconButton(
-                                    icon: (Icon(
-                                      Icons.favorite_border_rounded,
-                                      size: 25,
-                                      color: AppTheme.purple,
-                                    )),
-                                    onPressed: () {},
-                                  ),
+                                  child: favt
+                                      ? IconButton(
+                                          icon: (Icon(
+                                            Icons.favorite_rounded,
+                                            size: 25,
+                                            color: Colors.red,
+                                          )),
+                                          onPressed: () {
+                                            setState(() {
+                                              favt = false;
+
+                                            });
+                                            deleteFav(widget._channel.id.toString());
+                                          },
+                                        )
+                                      : IconButton(
+                                          icon: (Icon(
+                                            Icons.favorite_border_rounded,
+                                            size: 25,
+                                            color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                                ? AppTheme.purple
+                                                : AppTheme.white,
+                                          )),
+                                          onPressed: () {
+                                            setState(() {
+                                              favt = true;
+                                            });
+                                              addFav(widget._channel.id
+                                                  .toString());
+
+                                          },
+                                        ),
                                 ),
                               )
                             ],
@@ -370,7 +501,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                 child: Text(
                                   "Related Channels",
                                   style: TextStyle(
-                                    color: AppTheme.purple,
+                                    color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                        ? AppTheme.backgroundColor
+                                        : AppTheme.lightGrey,
                                     fontSize: 16,
                                   ),
                                 ),
@@ -378,6 +511,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: Material(
+                                  color: Colors.transparent,
                                   clipBehavior: Clip.antiAlias,
                                   child: InkWell(
                                       splashColor: AppTheme.lightGrey,
@@ -390,8 +524,12 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                       },
                                       child: SvgPicture.asset(
                                         AppConstants.list
-                                            ? "assets/icons/list_checked.svg"
-                                            : "assets/icons/list_unchecked.svg",
+                                            ? MediaQuery.of(context).platformBrightness ==
+                                            Brightness.light
+                                            ?"assets/icons/list_checked.svg":"assets/icons/list_checked_dark.svg"
+                                            :MediaQuery.of(context).platformBrightness ==
+                                            Brightness.light
+                                            ? "assets/icons/list_unchecked.svg":"assets/icons/list_unchecked_dark.svg",
                                         height: 27,
                                         width: 27,
                                       )),
@@ -402,6 +540,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                 child: Container(
                                   margin: const EdgeInsets.only(right: 35),
                                   child: Material(
+                                    color: Colors.transparent,
                                     clipBehavior: Clip.antiAlias,
                                     child: InkWell(
                                         onTap: () {
@@ -414,8 +553,12 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                         splashColor: AppTheme.lightGrey,
                                         child: SvgPicture.asset(
                                           AppConstants.list
-                                              ? "assets/icons/grid_unchecked.svg"
-                                              : "assets/icons/grid_checked.svg",
+                                              ? MediaQuery.of(context).platformBrightness ==
+                                              Brightness.light
+                                              ?"assets/icons/grid_unchecked.svg":"assets/icons/grid_unchecked_dark.svg"
+                                              : MediaQuery.of(context).platformBrightness ==
+                                              Brightness.light
+                                              ?"assets/icons/grid_checked.svg":"assets/icons/grid_checked_dark.svg",
                                           height: 27,
                                           width: 27,
                                         )),
@@ -501,6 +644,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                                               ),
                                                               Expanded(
                                                                   child: Card(
+                                                                    color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                                                        ? AppTheme.white
+                                                                        : AppTheme.darkCard,
                                                                 child:
                                                                     Container(
                                                                   height: 50,
@@ -519,7 +665,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                                                             child:
                                                                                 (Text(
                                                                               snapshot.data![index].chName,
-                                                                              style: TextStyle(color: AppTheme.purple, fontWeight: FontWeight.bold, fontSize: 16),
+                                                                              style: TextStyle(color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                                                                  ? AppTheme.purple
+                                                                                  : AppTheme.white, fontWeight: FontWeight.bold, fontSize: 16),
                                                                               maxLines: 1,
                                                                               overflow: TextOverflow.ellipsis,
                                                                             )),
@@ -533,7 +681,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                                                           size:
                                                                               30,
                                                                           color:
-                                                                              AppTheme.purple,
+                                                                          MediaQuery.of(context).platformBrightness == Brightness.light
+                                                                              ? AppTheme.purple
+                                                                              : AppTheme.white,
                                                                         ),
                                                                       )
                                                                     ],

@@ -20,7 +20,6 @@ class Channel {
     required this.category,
     required this.createdAt,
     required this.updatedAt,
-    required this.chCat,
   });
 
   int id;
@@ -33,7 +32,6 @@ class Channel {
   String category;
   DateTime createdAt;
   DateTime updatedAt;
-  String chCat;
 
   factory Channel.fromJson(Map<String, dynamic> json) => Channel(
     id: json["id"],
@@ -46,7 +44,6 @@ class Channel {
     category: json["category"],
     createdAt: DateTime.parse(json["created_at"]),
     updatedAt: DateTime.parse(json["updated_at"]),
-    chCat: json["ch_cat"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -60,6 +57,5 @@ class Channel {
     "category": category,
     "created_at": createdAt.toIso8601String(),
     "updated_at": updatedAt.toIso8601String(),
-    "ch_cat": chCat,
   };
 }

@@ -33,8 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void initState() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-    toMainScreen();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top]);
     super.initState();
   }
 
@@ -69,13 +68,23 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
           Align(
             alignment: Alignment.center,
-            child: Container(
-              margin: EdgeInsets.only(left: 50.0,right: 50.0),
-              child: Image.asset(
-                "assets/images/logo_splash.png",
-                fit: BoxFit.contain,
-              ),
-            ),
+            child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                curve: Curves.ease,
+                onEnd: (){
+                  toMainScreen();
+                },
+                duration: const Duration(seconds: 3),
+                builder: (BuildContext context, double opacity, Widget? child) {
+                  return Container(
+                    margin: EdgeInsets.all(100),
+                    child: Opacity(
+                        opacity: opacity,
+                        child: Image.asset(
+                          "assets/images/logo_splash.png",
+                        )),
+                  );
+                }),
           )
         ],
       ),
