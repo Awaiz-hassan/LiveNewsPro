@@ -13,8 +13,7 @@ import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
-
-
+import 'package:wakelock/wakelock.dart';
 
 class LiveStreamScreen extends StatefulWidget {
   Channel _channel;
@@ -77,8 +76,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
             'cID': cID,
           }));
       if (response.statusCode == 200) {
-
-        AppConstants.refreshFavs=true;
+        AppConstants.refreshFavs = true;
         var jsonString = response.body;
         FavModel fav = favModelFromJson(jsonString);
         if (fav.status == "1") {
@@ -91,12 +89,10 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
           });
         }
       } else if (response.statusCode == 404) {}
-
-    } on Exception {
-    }
+    } on Exception {}
   }
 
-  void deleteFav( String cID) async {
+  void deleteFav(String cID) async {
     final prefs = await SharedPreferences.getInstance();
 
     var client = http.Client();
@@ -107,7 +103,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
     try {
       var response = await client.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        AppConstants.refreshFavs=true;
+        AppConstants.refreshFavs = true;
         var jsonString = response.body;
 
         FavModel fav = favModelFromJson(jsonString);
@@ -116,7 +112,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
             favt = false;
           });
         }
-
       } else if (response.statusCode == 404) {}
       print(response.statusCode);
     } on Exception {}
@@ -124,6 +119,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
 
   @override
   void initState() {
+    Wakelock.enable();
+
     checkFav(widget._channel.id.toString());
     relatedChannels = HttpClient.getRelated(widget._channel);
     _controller = VideoPlayerController.network(widget._channel.streamUrl)
@@ -144,6 +141,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    Wakelock.disable();
     _controller.dispose();
     super.dispose();
   }
@@ -172,15 +170,17 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
         return Future.value(false);
       },
       child: Scaffold(
-          backgroundColor: MediaQuery.of(context).platformBrightness == Brightness.light
-              ? AppTheme.backgroundColor
-              : AppTheme.darkBackground,
+          backgroundColor:
+              MediaQuery.of(context).platformBrightness == Brightness.light
+                  ? AppTheme.backgroundColor
+                  : AppTheme.darkBackground,
           body: Stack(children: [
             Align(
               alignment: Alignment.bottomRight,
               child: Image.asset(
                 "assets/images/circles.png",
-                color: MediaQuery.of(context).platformBrightness == Brightness.light
+                color: MediaQuery.of(context).platformBrightness ==
+                        Brightness.light
                     ? AppTheme.darkGrey
                     : AppTheme.white,
                 width: MediaQuery.of(context).size.height / 2,
@@ -196,8 +196,11 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                     margin: fullScreen
                         ? const EdgeInsets.only(left: 0, top: 0, right: 0)
                         : const EdgeInsets.only(left: 20, top: 20, right: 20),
-                    height:
-                        fullScreen ? MediaQuery.of(context).size.height : 200,
+                    height: fullScreen
+                        ? MediaQuery.of(context).size.height
+                        : MediaQuery.of(context).size.shortestSide < 550
+                            ? 200
+                            : 400,
                     color: Colors.black,
                     child: ClipRRect(
                       child: Stack(
@@ -241,14 +244,18 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                                     _controller,
                                                     allowScrubbing: true,
                                                     colors: VideoProgressColors(
-                                                        backgroundColor:
-                                                            AppTheme.lightGrey,
-                                                        bufferedColor:
-                                                            AppTheme.grey,
-                                                        playedColor:
-                                                        MediaQuery.of(context).platformBrightness == Brightness.light
-                                                            ? AppTheme.purple
-                                                            : AppTheme.darkBackground,)),
+                                                      backgroundColor:
+                                                          AppTheme.lightGrey,
+                                                      bufferedColor:
+                                                          AppTheme.grey,
+                                                      playedColor: MediaQuery.of(
+                                                                      context)
+                                                                  .platformBrightness ==
+                                                              Brightness.light
+                                                          ? AppTheme.purple
+                                                          : AppTheme
+                                                              .darkBackground,
+                                                    )),
                                               )),
                                           Align(
                                             alignment: Alignment.bottomRight,
@@ -416,7 +423,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                       : Container(
                           margin: const EdgeInsets.only(left: 20, right: 20),
                           height: 70,
-                          color: MediaQuery.of(context).platformBrightness == Brightness.light
+                          color: MediaQuery.of(context).platformBrightness ==
+                                  Brightness.light
                               ? AppTheme.white
                               : AppTheme.darkCard,
                           child: Stack(
@@ -429,9 +437,12 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                   child: Text(
                                     widget._channel.chName,
                                     style: TextStyle(
-                                        color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                        color: MediaQuery.of(context)
+                                                    .platformBrightness ==
+                                                Brightness.light
                                             ? AppTheme.purple
-                                            : AppTheme.white, fontSize: 17),
+                                            : AppTheme.white,
+                                        fontSize: 17),
                                   ),
                                 ),
                               ),
@@ -461,16 +472,18 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                           onPressed: () {
                                             setState(() {
                                               favt = false;
-
                                             });
-                                            deleteFav(widget._channel.id.toString());
+                                            deleteFav(
+                                                widget._channel.id.toString());
                                           },
                                         )
                                       : IconButton(
                                           icon: (Icon(
                                             Icons.favorite_border_rounded,
                                             size: 25,
-                                            color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                            color: MediaQuery.of(context)
+                                                        .platformBrightness ==
+                                                    Brightness.light
                                                 ? AppTheme.purple
                                                 : AppTheme.white,
                                           )),
@@ -478,9 +491,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                             setState(() {
                                               favt = true;
                                             });
-                                              addFav(widget._channel.id
-                                                  .toString());
-
+                                            addFav(
+                                                widget._channel.id.toString());
                                           },
                                         ),
                                 ),
@@ -501,7 +513,9 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                 child: Text(
                                   "Related Channels",
                                   style: TextStyle(
-                                    color: MediaQuery.of(context).platformBrightness == Brightness.light
+                                    color: MediaQuery.of(context)
+                                                .platformBrightness ==
+                                            Brightness.light
                                         ? AppTheme.backgroundColor
                                         : AppTheme.lightGrey,
                                     fontSize: 16,
@@ -524,12 +538,16 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                       },
                                       child: SvgPicture.asset(
                                         AppConstants.list
-                                            ? MediaQuery.of(context).platformBrightness ==
-                                            Brightness.light
-                                            ?"assets/icons/list_checked.svg":"assets/icons/list_checked_dark.svg"
-                                            :MediaQuery.of(context).platformBrightness ==
-                                            Brightness.light
-                                            ? "assets/icons/list_unchecked.svg":"assets/icons/list_unchecked_dark.svg",
+                                            ? MediaQuery.of(context)
+                                                        .platformBrightness ==
+                                                    Brightness.light
+                                                ? "assets/icons/list_checked.svg"
+                                                : "assets/icons/list_checked_dark.svg"
+                                            : MediaQuery.of(context)
+                                                        .platformBrightness ==
+                                                    Brightness.light
+                                                ? "assets/icons/list_unchecked.svg"
+                                                : "assets/icons/list_unchecked_dark.svg",
                                         height: 27,
                                         width: 27,
                                       )),
@@ -553,12 +571,16 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                         splashColor: AppTheme.lightGrey,
                                         child: SvgPicture.asset(
                                           AppConstants.list
-                                              ? MediaQuery.of(context).platformBrightness ==
-                                              Brightness.light
-                                              ?"assets/icons/grid_unchecked.svg":"assets/icons/grid_unchecked_dark.svg"
-                                              : MediaQuery.of(context).platformBrightness ==
-                                              Brightness.light
-                                              ?"assets/icons/grid_checked.svg":"assets/icons/grid_checked_dark.svg",
+                                              ? MediaQuery.of(context)
+                                                          .platformBrightness ==
+                                                      Brightness.light
+                                                  ? "assets/icons/grid_unchecked.svg"
+                                                  : "assets/icons/grid_unchecked_dark.svg"
+                                              : MediaQuery.of(context)
+                                                          .platformBrightness ==
+                                                      Brightness.light
+                                                  ? "assets/icons/grid_checked.svg"
+                                                  : "assets/icons/grid_checked_dark.svg",
                                           height: 27,
                                           width: 27,
                                         )),
@@ -573,196 +595,196 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                       : Expanded(
                           child: FutureBuilder(
                               future: relatedChannels,
-                              builder: (BuildContext ctx,
-                                      AsyncSnapshot<List<Channel>> snapshot) =>
-                                  snapshot.hasData
-                                      ? AppConstants.list
-                                          ? Container(
-                                              margin: const EdgeInsets.only(
-                                                  bottom: 15.0),
-                                              child: ListView.builder(
-                                                  itemCount:
-                                                      snapshot.data!.length,
-                                                  physics:
-                                                      const BouncingScrollPhysics(),
-                                                  itemBuilder:
-                                                      (BuildContext context,
-                                                          int index) {
-                                                    return GestureDetector(
-                                                        onTap: () {
-                                                          Navigator.pushReplacement(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      LiveStreamScreen(
-                                                                          snapshot
-                                                                              .data![index])));
-                                                        },
-                                                        child: Container(
-                                                          height: 57,
-                                                          margin:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 20,
-                                                                  right: 17,
-                                                                  top: 5.0),
-                                                          child: Row(
-                                                            children: [
-                                                              ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
+                              builder:
+                                  (BuildContext ctx,
+                                          AsyncSnapshot<List<Channel>>
+                                              snapshot) =>
+                                      snapshot.hasData
+                                          ? AppConstants.list
+                                              ? Container(
+                                                  margin: const EdgeInsets.only(
+                                                      bottom: 15.0),
+                                                  child: ListView.builder(
+                                                      itemCount:
+                                                          snapshot.data!.length,
+                                                      physics:
+                                                          const BouncingScrollPhysics(),
+                                                      itemBuilder:
+                                                          (BuildContext context,
+                                                              int index) {
+                                                        return GestureDetector(
+                                                            onTap: () {
+                                                              Navigator.pushReplacement(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          LiveStreamScreen(
+                                                                              snapshot.data![index])));
+                                                            },
+                                                            child: Container(
+                                                              height: 57,
+                                                              margin:
+                                                                  const EdgeInsets
+                                                                          .only(
+                                                                      left: 20,
+                                                                      right: 17,
+                                                                      top: 5.0),
+                                                              child: Row(
+                                                                children: [
+                                                                  ClipRRect(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
                                                                             5.0),
-                                                                child: Stack(
-                                                                  children: [
-                                                                    Image.asset(
-                                                                      "assets/images/channel_bg.png",
+                                                                    child:
+                                                                        Stack(
+                                                                      children: [
+                                                                        Image
+                                                                            .asset(
+                                                                          "assets/images/channel_bg.png",
+                                                                          height:
+                                                                              50,
+                                                                          width:
+                                                                              50,
+                                                                        ),
+                                                                        Container(
+                                                                          margin: const EdgeInsets.only(
+                                                                              left: 10,
+                                                                              top: 10),
+                                                                          child:
+                                                                              CachedNetworkImage(
+                                                                            height:
+                                                                                30,
+                                                                            width:
+                                                                                30,
+                                                                            imageUrl: "https://livetvi.com/dashboard/images/channel_images/" +
+                                                                                snapshot.data![index].chName +
+                                                                                ".png",
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  Expanded(
+                                                                      child:
+                                                                          Card(
+                                                                    color: MediaQuery.of(context).platformBrightness ==
+                                                                            Brightness
+                                                                                .light
+                                                                        ? AppTheme
+                                                                            .white
+                                                                        : AppTheme
+                                                                            .darkCard,
+                                                                    child:
+                                                                        Container(
                                                                       height:
                                                                           50,
-                                                                      width: 50,
-                                                                    ),
-                                                                    Container(
-                                                                      margin: const EdgeInsets
-                                                                              .only(
-                                                                          left:
-                                                                              10,
-                                                                          top:
-                                                                              10),
                                                                       child:
-                                                                          CachedNetworkImage(
-                                                                        height:
-                                                                            30,
-                                                                        width:
-                                                                            30,
-                                                                        imageUrl: "https://livetvi.com/dashboard/images/channel_images/" +
-                                                                            snapshot.data![index].chName +
-                                                                            ".png",
+                                                                          Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.center,
+                                                                        children: [
+                                                                          Expanded(
+                                                                              flex: 8,
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+                                                                                child: (Text(
+                                                                                  snapshot.data![index].chName,
+                                                                                  style: TextStyle(color: MediaQuery.of(context).platformBrightness == Brightness.light ? AppTheme.purple : AppTheme.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                )),
+                                                                              )),
+                                                                          Expanded(
+                                                                            flex:
+                                                                                2,
+                                                                            child:
+                                                                                Icon(
+                                                                              Icons.play_arrow_rounded,
+                                                                              size: 30,
+                                                                              color: MediaQuery.of(context).platformBrightness == Brightness.light ? AppTheme.purple : AppTheme.white,
+                                                                            ),
+                                                                          )
+                                                                        ],
                                                                       ),
                                                                     ),
-                                                                  ],
-                                                                ),
+                                                                  ))
+                                                                ],
                                                               ),
-                                                              Expanded(
-                                                                  child: Card(
-                                                                    color: MediaQuery.of(context).platformBrightness == Brightness.light
-                                                                        ? AppTheme.white
-                                                                        : AppTheme.darkCard,
-                                                                child:
-                                                                    Container(
-                                                                  height: 50,
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .center,
-                                                                    children: [
-                                                                      Expanded(
-                                                                          flex:
-                                                                              8,
-                                                                          child:
-                                                                              Padding(
-                                                                            padding:
-                                                                                const EdgeInsets.only(left: 10.0, right: 10.0),
-                                                                            child:
-                                                                                (Text(
-                                                                              snapshot.data![index].chName,
-                                                                              style: TextStyle(color: MediaQuery.of(context).platformBrightness == Brightness.light
-                                                                                  ? AppTheme.purple
-                                                                                  : AppTheme.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                                                              maxLines: 1,
-                                                                              overflow: TextOverflow.ellipsis,
-                                                                            )),
-                                                                          )),
-                                                                      Expanded(
-                                                                        flex: 2,
-                                                                        child:
-                                                                            Icon(
-                                                                          Icons
-                                                                              .play_arrow_rounded,
-                                                                          size:
-                                                                              30,
-                                                                          color:
-                                                                          MediaQuery.of(context).platformBrightness == Brightness.light
-                                                                              ? AppTheme.purple
-                                                                              : AppTheme.white,
-                                                                        ),
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ))
-                                                            ],
-                                                          ),
-                                                        ));
-                                                  }))
-                                          : Container(
-                                              margin: const EdgeInsets.only(
-                                                  left: 13,
-                                                  right: 13,
-                                                  bottom: 15),
-                                              child: GridView.builder(
-                                                  shrinkWrap: false,
-                                                  physics:
-                                                      const BouncingScrollPhysics(),
-                                                  gridDelegate:
-                                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                                          crossAxisCount: 3,
+                                                            ));
+                                                      }))
+                                              : Container(
+                                                  margin: const EdgeInsets.only(
+                                                      left: 13,
+                                                      right: 13,
+                                                      bottom: 15),
+                                                  child: GridView.builder(
+                                                      shrinkWrap: false,
+                                                      physics:
+                                                          const BouncingScrollPhysics(),
+                                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                                          crossAxisCount:
+                                                              MediaQuery.of(context)
+                                                                          .size
+                                                                          .shortestSide <
+                                                                      550
+                                                                  ? 3
+                                                                  : 5,
                                                           childAspectRatio: 1),
-                                                  itemCount:
-                                                      snapshot.data!.length,
-                                                  itemBuilder:
-                                                      (BuildContext ctx,
-                                                          index) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        Navigator.pushReplacement(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    LiveStreamScreen(
-                                                                        snapshot
-                                                                            .data![index])));
-                                                      },
-                                                      child: Container(
-                                                        margin: const EdgeInsets
-                                                            .all(8.0),
-                                                        child: ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      10.0),
-                                                          child: Stack(
-                                                            children: [
-                                                              Image.asset(
-                                                                "assets/images/channel_bg.png",
+                                                      itemCount:
+                                                          snapshot.data!.length,
+                                                      itemBuilder:
+                                                          (BuildContext ctx,
+                                                              index) {
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            Navigator.pushReplacement(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        LiveStreamScreen(
+                                                                            snapshot.data![index])));
+                                                          },
+                                                          child: Container(
+                                                            margin:
+                                                                const EdgeInsets
+                                                                    .all(8.0),
+                                                            child: ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10.0),
+                                                              child: Stack(
+                                                                children: [
+                                                                  Image.asset(
+                                                                    "assets/images/channel_bg.png",
+                                                                  ),
+                                                                  Container(
+                                                                    margin:
+                                                                        const EdgeInsets.all(
+                                                                            20),
+                                                                    child:
+                                                                        CachedNetworkImage(
+                                                                      fit: BoxFit
+                                                                          .contain,
+                                                                      imageUrl: "https://livetvi.com/dashboard/images/channel_images/" +
+                                                                          snapshot
+                                                                              .data![index]
+                                                                              .chName +
+                                                                          ".png",
+                                                                    ),
+                                                                  ),
+                                                                ],
                                                               ),
-                                                              Container(
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                        .all(20),
-                                                                child:
-                                                                    CachedNetworkImage(
-                                                                  fit: BoxFit
-                                                                      .contain,
-                                                                  imageUrl: "https://livetvi.com/dashboard/images/channel_images/" +
-                                                                      snapshot
-                                                                          .data![
-                                                                              index]
-                                                                          .chName +
-                                                                      ".png",
-                                                                ),
-                                                              ),
-                                                            ],
+                                                            ),
                                                           ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }))
-                                      : Center(
-                                          child: Center(
-                                              child: Lottie.asset(
-                                                  'assets/json/loading_animation.json',
-                                                  height: 150.0)),
-                                        )),
+                                                        );
+                                                      }))
+                                          : Center(
+                                              child: Center(
+                                                  child: Lottie.asset(
+                                                      'assets/json/loading_animation.json',
+                                                      height: 150.0)),
+                                            )),
                         )
                 ],
               )),

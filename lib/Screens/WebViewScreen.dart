@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:livenewspro/Theme/AppTheme.dart';
 import 'package:lottie/lottie.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -29,34 +30,37 @@ class _WebViewMainState extends State<WebViewMain> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-          child: Stack(
-            children: [
-              WebView(
-                initialUrl: widget.pageUrl,
-                javascriptMode: JavascriptMode.unrestricted,
-                onWebViewCreated: (WebViewController webViewController) {
-                  _webViewController = webViewController;
-                  _controller.complete(webViewController);
-                },
-                onPageStarted: (initialUrl) {
-                  setState(() {
-                    loading = false;
-                  });
-                },
+      body: Stack(
+        children: [
+          SafeArea(
+            child: WebView(
+              initialUrl: widget.pageUrl,
+              javascriptMode: JavascriptMode.unrestricted,
+              onWebViewCreated: (WebViewController webViewController) {
+                _webViewController = webViewController;
+                _controller.complete(webViewController);
+              },
+              onPageStarted: (initialUrl) {
+                setState(() {
+                  loading=false;
+                });
+              },
 
-                gestureNavigationEnabled: true,
-              ),
-              loading
-                  ? Container(
-                color: Colors.white,
-                child: Center(
-                    child: Lottie.asset('assets/json/loading_animation.json',
-                        height: 100)),
-              )
-                  : Stack()
-            ],
-          )),
+              gestureNavigationEnabled: true,
+            ),
+          ),
+          loading
+              ? Container(
+            color: MediaQuery.of(context).platformBrightness ==
+                Brightness.light
+                ?AppTheme.backgroundColor:AppTheme.darkBackground,
+            child: Center(
+                child: Lottie.asset('assets/json/loading_animation.json',
+                    height: 150)),
+          )
+              : Stack()
+        ],
+      ),
     );
   }
 }

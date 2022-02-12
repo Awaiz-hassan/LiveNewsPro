@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:livenewspro/Screens/LoginScreen.dart';
-import 'package:livenewspro/Theme/AppTheme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'MainScreen.dart';

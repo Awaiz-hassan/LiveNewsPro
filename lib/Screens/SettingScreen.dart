@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_switch/flutter_switch.dart';
 import 'package:get/get.dart';
 import 'package:livenewspro/Controller/ChannelsController.dart';
 import 'package:livenewspro/Controller/FavouritesController.dart';
@@ -22,9 +23,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final UserDetailsController _userDetailsController =
       Get.put(UserDetailsController());
 
+  bool _isToggled=false;
   @override
   void initState() {
-    super.initState();
+    if(Get.isDarkMode) {setState(() {
+      _isToggled=true;
+    });}
+    else{
+      setState(() {
+        _isToggled=false;
+      });
+    }
+      super.initState();
   }
 
   @override
@@ -233,9 +243,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         ),
                                         Expanded(
                                           child: Container(
+                                            constraints:
+                                                BoxConstraints(maxWidth: 120),
                                             margin: const EdgeInsets.only(
                                                 right: 20.0),
-                                            height: 28.0,
+                                            height: 33.0,
                                             child: ElevatedButton(
                                               onPressed: () {
                                                 Navigator.push(
@@ -273,6 +285,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       ],
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Card(
+                            color: MediaQuery.of(context).platformBrightness ==
+                                    Brightness.light
+                                ? AppTheme.white
+                                : AppTheme.darkCard,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            margin: const EdgeInsets.only(
+                                top: 10, left: 30, right: 30, bottom: 30),
+                            child: SizedBox(
+                              height: 50,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Text(
+                                        "Night Mode",
+                                        style: TextStyle(
+                                            fontSize: 17,
+                                            color: MediaQuery.of(context)
+                                                        .platformBrightness ==
+                                                    Brightness.light
+                                                ? AppTheme.purple
+                                                : AppTheme.white),
+                                      )),
+                                  Container(
+                                    margin: EdgeInsets.only(right: 20.0),
+                                    child: FlutterSwitch(
+                                      width: 50.0,
+                                      height: 25.0,
+                                      toggleSize: 22.0,
+                                      value: _isToggled,
+                                      borderRadius: 15.0,
+                                      padding: 1.0,
+                                      activeToggleColor: AppTheme.yellow,
+                                      inactiveToggleColor: AppTheme.purple,
+                                      activeSwitchBorder: Border.all(
+                                        color: AppTheme.yellow,
+                                        width: 1.5,
+                                      ),
+                                      inactiveSwitchBorder: Border.all(
+                                        color: AppTheme.purple,
+                                        width: 1.5,
+                                      ),
+                                      activeColor: AppTheme.darkBackground,
+                                      inactiveColor: Colors.white,
+                                      activeIcon: Icon(
+                                        Icons.nightlight_round,
+                                        color: AppTheme.darkBackground,
+                                      ),
+                                      inactiveIcon: Icon(
+                                        Icons.wb_sunny,
+                                        color: AppTheme.white,
+                                      ),
+                                      onToggle: (val) {
+                                        setState(() {
+                                          _isToggled = val;
+                                        });
+                                        if(Get.isDarkMode){
+                                          Get.changeThemeMode(ThemeMode.light);
+                                        }
+                                        else{
+                                          Get.changeThemeMode(ThemeMode.dark);
+                                        }
+                                      },
+                                    ),
+                                  )
                                 ],
                               ),
                             ),
@@ -478,8 +563,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Container(
                                 margin: const EdgeInsets.only(
                                     top: 40.0, bottom: 40.0),
-                                height: 28.0,
-                                width: 120,
+                                height: 33.0,
+                                width:
+                                    MediaQuery.of(context).size.shortestSide <
+                                            550
+                                        ? 120
+                                        : 240,
                                 child: ElevatedButton(
                                   onPressed: () async {
                                     Get.delete<ChannelsController>();

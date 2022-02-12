@@ -22,6 +22,7 @@ class _EditProfileState extends State<EditProfile> {
   String userName = "";
   String userId = "";
   bool loading = false;
+  bool _isObscure=true;
 
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -404,12 +405,13 @@ class _EditProfileState extends State<EditProfile> {
                                         ? AppTheme.purple
                                         : AppTheme.darkBackground, width: 1.5)),
                             child: Container(
-                              height: 40.0,
+                              height: 38.0,
                               child: SizedBox.expand(
                                 child: Padding(
                                     padding: const EdgeInsets.only(
-                                        left: 10.0, right: 10.0),
+                                        left: 10.0, right: 10.0,top: 3.0),
                                     child: TextField(
+                                      obscureText: _isObscure,
                                       controller: newPassword,
                                       style: TextStyle(color: MediaQuery.of(context).platformBrightness == Brightness.light
                                           ? AppTheme.purple
@@ -423,6 +425,28 @@ class _EditProfileState extends State<EditProfile> {
                                               left: 3.0,
                                               right: 3.0,
                                               bottom: 7.0),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              _isObscure
+                                                  ? Icons.visibility_off
+                                                  : Icons.visibility,
+                                              size: 20,
+                                              color:  MediaQuery.of(context)
+                                                  .platformBrightness ==
+                                                  Brightness.light
+                                                  ? AppTheme.purple
+                                                  : AppTheme.yellow,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                if (_isObscure) {
+                                                  _isObscure = false;
+                                                } else {
+                                                  _isObscure = true;
+                                                }
+                                              });
+                                            },
+                                          ),
                                           border: InputBorder.none,
                                           hintText: 'New Password',
                                           hintStyle: TextStyle(
@@ -473,6 +497,7 @@ class _EditProfileState extends State<EditProfile> {
                                     padding: const EdgeInsets.only(
                                         left: 10.0, right: 10.0),
                                     child: TextField(
+                                      obscureText: _isObscure,
                                       controller: confirmPassword,
                                       style: TextStyle(color: MediaQuery.of(context).platformBrightness == Brightness.light
                                           ? AppTheme.purple
@@ -601,7 +626,7 @@ class _EditProfileState extends State<EditProfile> {
                                 style: TextButton.styleFrom(
                                   primary: MediaQuery.of(context).platformBrightness == Brightness.light
                                       ? AppTheme.white
-                                      : AppTheme.purple,
+                                      : AppTheme.darkBackground,
                                   backgroundColor: MediaQuery.of(context).platformBrightness == Brightness.light
                                       ? AppTheme.purple
                                       : AppTheme.yellow,

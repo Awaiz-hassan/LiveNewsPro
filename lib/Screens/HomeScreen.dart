@@ -132,43 +132,179 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Lottie.asset(
                                 'assets/json/loading_animation.json',
                                 height: 150.0))
-                        : ListView.builder(
-                            padding: EdgeInsets.all(0.0),
-                            itemCount: _channelsController.channelList.length,
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (BuildContext context, int index) {
-                              return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                LiveStreamScreen(
-                                                    _channelsController
-                                                        .channelList[index])));
-                                  },
-                                  child: Container(
-                                    height: 57,
-                                    margin: const EdgeInsets.only(
-                                        left: 20, right: 17, top: 5.0),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
+                        : RefreshIndicator(
+                            onRefresh: () async {
+                              _channelsController.fetchAllChannels();
+                            },
+                            child: ListView.builder(
+                                padding: EdgeInsets.all(0.0),
+                                itemCount:
+                                    _channelsController.channelList.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LiveStreamScreen(
+                                                        _channelsController
+                                                                .channelList[
+                                                            index])));
+                                      },
+                                      child: Container(
+                                        height: 57,
+                                        margin: const EdgeInsets.only(
+                                            left: 20, right: 17, top: 5.0),
+                                        child: Row(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(5.0),
+                                              child: Stack(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/images/channel_bg.png",
+                                                    height: 50,
+                                                    width: 50,
+                                                  ),
+                                                  Container(
+                                                    margin: EdgeInsets.only(
+                                                        left: 10, top: 10),
+                                                    child: CachedNetworkImage(
+                                                      height: 30,
+                                                      width: 30,
+                                                      imageUrl:
+                                                          "https://livetvi.com/dashboard/images/channel_images/" +
+                                                              _channelsController
+                                                                  .channelList[
+                                                                      index]
+                                                                  .chName +
+                                                              ".png",
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Expanded(
+                                                child: Card(
+                                              color: MediaQuery.of(context)
+                                                          .platformBrightness ==
+                                                      Brightness.light
+                                                  ? AppTheme.white
+                                                  : AppTheme.darkCard,
+                                              child: Container(
+                                                height: 50,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Expanded(
+                                                        flex: 8,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  left: 10.0,
+                                                                  right: 10.0),
+                                                          child: (Text(
+                                                            _channelsController
+                                                                .channelList[
+                                                                    index]
+                                                                .chName,
+                                                            style: TextStyle(
+                                                                color: MediaQuery.of(context)
+                                                                            .platformBrightness ==
+                                                                        Brightness
+                                                                            .light
+                                                                    ? AppTheme
+                                                                        .purple
+                                                                    : AppTheme
+                                                                        .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 16),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          )),
+                                                        )),
+                                                    Expanded(
+                                                      flex: 2,
+                                                      child: Icon(
+                                                        Icons
+                                                            .play_arrow_rounded,
+                                                        size: 30,
+                                                        color: MediaQuery.of(
+                                                                        context)
+                                                                    .platformBrightness ==
+                                                                Brightness.light
+                                                            ? AppTheme.purple
+                                                            : AppTheme.white,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            ))
+                                          ],
+                                        ),
+                                      ));
+                                }),
+                          ))
+                    : Obx(() => _channelsController.isLoading.value
+                        ? Center(
+                            child: Lottie.asset(
+                                'assets/json/loading_animation.json',
+                                height: 150.0))
+                        : Container(
+                            margin:
+                                const EdgeInsets.only(left: 15.0, right: 15.0),
+                            child: RefreshIndicator(
+                              onRefresh: () async {
+                                _channelsController.fetchAllChannels();
+                              },
+                              child: GridView.builder(
+                                  shrinkWrap: false,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: MediaQuery.of(context)
+                                                      .size
+                                                      .shortestSide <
+                                                  550
+                                              ? 3
+                                              : 5,
+                                          childAspectRatio: 1),
+                                  itemCount:
+                                      _channelsController.channelList.length,
+                                  itemBuilder: (BuildContext ctx, index) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LiveStreamScreen(
+                                                        _channelsController
+                                                                .channelList[
+                                                            index])));
+                                      },
+                                      child: Container(
+                                        margin: EdgeInsets.all(8.0),
+                                        child: ClipRRect(
                                           borderRadius:
-                                              BorderRadius.circular(5.0),
+                                              BorderRadius.circular(10.0),
                                           child: Stack(
                                             children: [
                                               Image.asset(
                                                 "assets/images/channel_bg.png",
-                                                height: 50,
-                                                width: 50,
                                               ),
                                               Container(
-                                                margin: EdgeInsets.only(
-                                                    left: 10, top: 10),
+                                                margin: EdgeInsets.all(20),
                                                 child: CachedNetworkImage(
-                                                  height: 30,
-                                                  width: 30,
+                                                  fit: BoxFit.contain,
                                                   imageUrl:
                                                       "https://livetvi.com/dashboard/images/channel_images/" +
                                                           _channelsController
@@ -181,125 +317,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ],
                                           ),
                                         ),
-                                        Expanded(
-                                            child: Card(
-                                          color: MediaQuery.of(context)
-                                                      .platformBrightness ==
-                                                  Brightness.light
-                                              ? AppTheme.white
-                                              : AppTheme.darkCard,
-                                          child: Container(
-                                            height: 50,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Expanded(
-                                                    flex: 8,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 10.0,
-                                                              right: 10.0),
-                                                      child: (Text(
-                                                        _channelsController
-                                                            .channelList[index]
-                                                            .chName,
-                                                        style: TextStyle(
-                                                            color: MediaQuery.of(
-                                                                            context)
-                                                                        .platformBrightness ==
-                                                                    Brightness
-                                                                        .light
-                                                                ? AppTheme
-                                                                    .purple
-                                                                : AppTheme
-                                                                    .white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 16),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      )),
-                                                    )),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Icon(
-                                                    Icons.play_arrow_rounded,
-                                                    size: 30,
-                                                    color: MediaQuery.of(
-                                                                    context)
-                                                                .platformBrightness ==
-                                                            Brightness.light
-                                                        ? AppTheme.purple
-                                                        : AppTheme.white,
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ))
-                                      ],
-                                    ),
-                                  ));
-                            }))
-                    : Obx(() => _channelsController.isLoading.value
-                        ? Center(
-                            child: Lottie.asset(
-                                'assets/json/loading_animation.json',
-                                height: 150.0))
-                        : Container(
-                            margin:
-                                const EdgeInsets.only(left: 15.0, right: 15.0),
-                            child: GridView.builder(
-                                shrinkWrap: false,
-                                physics: const BouncingScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3, childAspectRatio: 1),
-                                itemCount:
-                                    _channelsController.channelList.length,
-                                itemBuilder: (BuildContext ctx, index) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  LiveStreamScreen(
-                                                      _channelsController
-                                                              .channelList[
-                                                          index])));
-                                    },
-                                    child: Container(
-                                      margin: EdgeInsets.all(8.0),
-                                      child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                        child: Stack(
-                                          children: [
-                                            Image.asset(
-                                              "assets/images/channel_bg.png",
-                                            ),
-                                            Container(
-                                              margin: EdgeInsets.all(20),
-                                              child: CachedNetworkImage(
-                                                fit: BoxFit.contain,
-                                                imageUrl:
-                                                    "https://livetvi.com/dashboard/images/channel_images/" +
-                                                        _channelsController
-                                                            .channelList[index]
-                                                            .chName +
-                                                        ".png",
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                       ),
-                                    ),
-                                  );
-                                }),
+                                    );
+                                  }),
+                            ),
                           )),
                 margin: const EdgeInsets.only(top: 70.0, bottom: 15.0),
               ),

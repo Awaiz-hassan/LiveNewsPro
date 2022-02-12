@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+
+
+  static final light = ThemeData.light();
+  static final dark = ThemeData.dark();
+
+
   static ThemeData getLightTheme(BuildContext context) => ThemeData(
       primarySwatch: purpleMain, fontFamily: "assets/font/lato_regular.ttf");
 
